@@ -30,7 +30,7 @@ namespace FiniteStateEntropy
 
         internal static int FseCompressedBound(int size) => (FSE_NCOUNTBOUND + FseBlockBound(size));
 
-        public static void FseBuildCTableWksp(ref FseCompressTableHeader cth, Span<ushort> nextStateNumber, Span<FseSymbolCompressionTransform> symbolTT, ReadOnlySpan<short> normalizedCounter, int maxSymbolValue, int tableLog, Span<byte> workSpace)
+        public static void FseBuildCTableWksp(ref FseCompressTable ct, ReadOnlySpan<short> normalizedCounter, int maxSymbolValue, int tableLog, Span<byte> workSpace)
         {
             int tableSize = 1 << tableLog;
             int tableMask = tableSize - 1;
@@ -48,8 +48,8 @@ namespace FiniteStateEntropy
                 {
                     throw new ArgumentException("Workspace is too small.", nameof(workSpace));
                 }
-                cth.tableLog = (ushort)tableLog;
-                cth.maxSymbolValue = (ushort)maxSymbolValue;
+                ct.tableLog = (ushort)tableLog;
+                ct.maxSymbolValue = (ushort)maxSymbolValue;
                 Debug.Assert(tableLog < 16);
 
                 /* symbol start positions */
@@ -94,6 +94,7 @@ namespace FiniteStateEntropy
                 }
 
                 /* Build table */
+                var nextStateNumber = ct.nextStateNumber;
                 {
                     for (int u = 0; u < tableSize; u++)
                     {
@@ -103,6 +104,7 @@ namespace FiniteStateEntropy
                 }
 
                 /* Build Symbol Transformation Table */
+                var symbolTT = ct.symbolTT;
                 {
                     int total = 0;
                     for (int s = 0; s <= maxSymbolValue; s++)
@@ -144,14 +146,7 @@ namespace FiniteStateEntropy
             byte[] buffer = ArrayPool<byte>.Shared.Rent(FSE_MAX_TABLESIZE);
             try
             {
-                FseCompressTableHeader cth = new FseCompressTableHeader
-                {
-                    tableLog = ct.tableLog,
-                    maxSymbolValue = ct.maxSymbolValue
-                };
-                FseBuildCTableWksp(ref cth, ct.nextStateNumber, ct.symbolTT, normalizedCounter, maxSymbolValue, tableLog, buffer.AsSpan(0, FSE_MAX_TABLESIZE));
-                ct.tableLog = cth.tableLog;
-                ct.maxSymbolValue = cth.maxSymbolValue;
+                FseBuildCTableWksp(ref ct, normalizedCounter, maxSymbolValue, tableLog, buffer.AsSpan(0, FSE_MAX_TABLESIZE));
             }
             finally
             {
@@ -722,14 +717,7 @@ namespace FiniteStateEntropy
                 destination = destination.Slice(bytesWritten);
 
                 /* Compress */
-                var cth = new FseCompressTableHeader
-                {
-                    tableLog = CTable.tableLog,
-                    maxSymbolValue = CTable.maxSymbolValue
-                };
-                FseBuildCTableWksp(ref cth, CTable.nextStateNumber, CTable.symbolTT, norm, maxSymbolValue, tableLog, scratchBuffer);
-                CTable.tableLog = cth.tableLog;
-                CTable.maxSymbolValue = cth.maxSymbolValue;
+                FseBuildCTableWksp(ref CTable, norm, maxSymbolValue, tableLog, scratchBuffer);
 
                 bytesWritten = FseCompressUsingCTable(destination, source, in CTable);
                 destination = destination.Slice(bytesWritten);
