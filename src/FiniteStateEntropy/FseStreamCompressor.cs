@@ -259,7 +259,17 @@ namespace FiniteStateEntropy
 
         public void Dispose()
         {
-            // Do nothing
+            if (!(_inputBuffer is null))
+            {
+                ArrayPool<byte>.Shared.Return(_inputBuffer);
+                _inputBuffer = null;
+            }
+            if (!(_outputBuffer is null))
+            {
+                ArrayPool<byte>.Shared.Return(_outputBuffer);
+                _inputBuffer = null;
+            }
+            Reset();
         }
     }
 }
