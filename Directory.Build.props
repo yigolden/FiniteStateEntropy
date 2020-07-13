@@ -10,7 +10,7 @@
     <Product>FiniteStateEntropy</Product>
     <Authors>YiGolden</Authors>
     <Copyright>Copyright (c) 2020 yigolden</Copyright>
-    <PackageTags>fse</PackageTags>
+    <PackageTags>fse compression</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/yigolden/FiniteStateEntropy</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
