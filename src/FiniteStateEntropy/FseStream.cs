@@ -80,6 +80,19 @@ namespace FiniteStateEntropy
             Debug.Assert(_stream != null);
             Debug.Assert(_inputBuffer != null);
 
+            if (buffer is null)
+            {
+                throw new ArgumentOutOfRangeException(nameof(buffer));
+            }
+            if ((uint)offset > (uint)buffer.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(offset));
+            }
+            if (count < 0 || (offset + count) > buffer.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
+            }
+
             while (true)
             {
                 switch (_decompressor.State)
@@ -166,6 +179,19 @@ namespace FiniteStateEntropy
             }
             Debug.Assert(_stream != null);
             Debug.Assert(_inputBuffer != null);
+
+            if (buffer is null)
+            {
+                throw new ArgumentOutOfRangeException(nameof(buffer));
+            }
+            if ((uint)offset > (uint)buffer.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(offset));
+            }
+            if (count < 0 || (offset + count) > buffer.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
+            }
 
             while (true)
             {
@@ -256,6 +282,19 @@ namespace FiniteStateEntropy
             }
             Debug.Assert(_stream != null);
 
+            if (buffer is null)
+            {
+                throw new ArgumentOutOfRangeException(nameof(buffer));
+            }
+            if ((uint)offset > (uint)buffer.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(offset));
+            }
+            if (count < 0 || (offset + count) > buffer.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
+            }
+
             while (count > 0)
             {
                 switch (_compressor.State)
@@ -320,6 +359,19 @@ namespace FiniteStateEntropy
                 throw new ObjectDisposedException(nameof(FseStream));
             }
             Debug.Assert(_stream != null);
+
+            if (buffer is null)
+            {
+                throw new ArgumentOutOfRangeException(nameof(buffer));
+            }
+            if ((uint)offset > (uint)buffer.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(offset));
+            }
+            if (count < 0 || (offset + count) > buffer.Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
+            }
 
             while (count > 0)
             {
