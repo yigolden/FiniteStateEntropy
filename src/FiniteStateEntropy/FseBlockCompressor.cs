@@ -691,7 +691,7 @@ namespace FiniteStateEntropy
 
                 /* Scan input and build symbol stats */
                 {
-                    int maxCount = (int)Hist.HistCountSimple(count, ref maxSymbolValue, source);
+                    int maxCount = (int)Hist.HistCount(count, ref maxSymbolValue, source);
                     if (maxCount == source.Length)
                     {
                         return 1; /* only a single symbol in src : rle */
