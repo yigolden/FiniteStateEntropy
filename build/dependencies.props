@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project>
   <PropertyGroup Label="Package Versions">
-    <MicrosoftCodeAnalysisFxCopAnalyzersPackageVersion>3.0.0</MicrosoftCodeAnalysisFxCopAnalyzersPackageVersion>
+    <MicrosoftCodeAnalysisFxCopAnalyzersPackageVersion>3.3.1</MicrosoftCodeAnalysisFxCopAnalyzersPackageVersion>
     <MicrosoftSourceLinkGitHubPackageVersion>1.0.0</MicrosoftSourceLinkGitHubPackageVersion>
 
-    <SystemIOMemoryMappedFilesPackageVersion>4.3.0</SystemIOMemoryMappedFilesPackageVersion>
     <SystemMemoryPackageVersion>4.5.4</SystemMemoryPackageVersion>
-    <SystemRuntimeCompilerServicesUnsafePackageVersion>4.7.1</SystemRuntimeCompilerServicesUnsafePackageVersion>
+    <SystemRuntimeCompilerServicesUnsafePackageVersion>5.0.0</SystemRuntimeCompilerServicesUnsafePackageVersion>
   </PropertyGroup>
 </Project>

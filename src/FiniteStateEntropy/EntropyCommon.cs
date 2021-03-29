@@ -1,13 +1,19 @@
 ﻿using System;
 using System.Buffers.Binary;
 using System.Diagnostics;
+using System.IO;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace FiniteStateEntropy
 {
-    public static class EntropyCommon
+    internal static class EntropyCommon
     {
         private const int FSE_MIN_TABLELOG = 5;
         private const int FSE_TABLELOG_ABSOLUTE_MAX = 15;
+
+        private const int HUF_TABLELOG_MAX = 12;
+
 
         public static bool FseReadNCount(ReadOnlySpan<byte> headerBuffer, Span<short> normalizedCounter, ref int maxSymbolValue, out int tableLog, out int nCountLength)
         {
@@ -148,5 +154,97 @@ namespace FiniteStateEntropy
             return true;
         }
 
+
+        public static int HufReadStats(Span<byte> huffWeight, Span<int> rankStats, ReadOnlySpan<byte> source, out int nbSymbols, out int tableLog)
+        {
+            if (source.IsEmpty)
+            {
+                throw new ArgumentException("Source can not be empty.", nameof(source));
+            }
+
+            int iSize = source[0];
+
+            int oSize;
+            if (iSize >= 128)
+            {
+                ref byte ip = ref MemoryMarshal.GetReference(source);
+
+                // special header
+                oSize = iSize - 127;
+                iSize = (oSize + 1) / 2;
+                if (iSize + 1 > source.Length)
+                {
+                    throw new InvalidDataException();
+                }
+                if (oSize >= huffWeight.Length)
+                {
+                    throw new InvalidDataException();
+                }
+                ip = ref Unsafe.Add(ref ip, 1);
+                for (int n = 0; n < oSize; n += 2)
+                {
+                    huffWeight[n] = (byte)(Unsafe.Add(ref ip, n / 2) >> 4);
+                    huffWeight[n + 1] = (byte)(Unsafe.Add(ref ip, n / 2) & 15);
+                }
+            }
+            else
+            {
+                // header compressed with FSE (normal case)
+                if (iSize + 1 > source.Length)
+                {
+                    throw new InvalidDataException();
+                }
+
+                Span<FseDecompressTable> fseWorkspace = stackalloc FseDecompressTable[65]; // FSE_DTABLE_SIZE_U32(6) // 6 is max possible tableLog for HUF header (maybe even 5, to be tested)
+                oSize = FseBlockDecompressor.DecompressWorkspace(source.Slice(1, iSize), huffWeight.Slice(0, huffWeight.Length - 1), fseWorkspace, 6);
+            }
+
+            // collect weight stats
+            rankStats.Clear();
+            int weightTotal = 0;
+            for (int n = 0; n < oSize; n++)
+            {
+                if (huffWeight[n] >= HUF_TABLELOG_MAX)
+                {
+                    throw new InvalidDataException();
+                }
+                rankStats[huffWeight[n]]++;
+                weightTotal += (1 << huffWeight[n]) >> 1;
+            }
+            if (weightTotal == 0)
+            {
+                throw new InvalidDataException();
+            }
+
+            // get last non-null symbol weight (implied, total must be 2^n)
+            {
+                tableLog = MathHelper.Log2((uint)weightTotal) + 1;
+                if (tableLog > HUF_TABLELOG_MAX)
+                {
+                    throw new InvalidDataException();
+                }
+                int total = 1 << tableLog;
+                int rest = total - weightTotal;
+                int log2OfRest = MathHelper.Log2((uint)rest);
+                int verif = 1 << log2OfRest;
+                int lastWeight = log2OfRest + 1;
+                if (verif != rest)
+                {
+                    throw new InvalidDataException();
+                }
+                huffWeight[oSize] = (byte)lastWeight;
+                rankStats[lastWeight]++;
+            }
+
+            // check tree construction validity
+            if ((rankStats[1] < 2) || (rankStats[1] & 1) != 0)
+            {
+                throw new InvalidDataException();
+            }
+
+            // resultes
+            nbSymbols = oSize + 1;
+            return iSize + 1;
+        }
     }
 }
