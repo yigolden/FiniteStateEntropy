@@ -1,6 +1,6 @@
 ﻿namespace FiniteStateEntropy
 {
-    public struct sortedSymbol
+    internal struct sortedSymbol
     {
         public byte symbol;
         public byte weight;

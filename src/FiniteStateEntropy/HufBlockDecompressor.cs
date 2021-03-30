@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Buffers.Binary;
 using System.Diagnostics;
 using System.IO;
@@ -12,6 +13,8 @@ namespace FiniteStateEntropy
         private const int HUF_TABLELOG_MAX = 12;
         private const int HUF_TABLELOG_DEFAULT = 11;
         private const int HUF_SYMBOLVALUE_MAX = 255;
+
+        private const int HUF_DECOMPRESS_WORKSPACE_SIZE = 2 << 10;
 
         private const int RankValColTypeSize = (HUF_TABLELOG_MAX + 12) * sizeof(uint);
 
@@ -112,6 +115,19 @@ namespace FiniteStateEntropy
                 => rankValOrigin.Slice(nbBits * (HUF_TABLELOG_MAX + 1), HUF_TABLELOG_MAX + 1);
         }
 
+        public static int ReadDTableX2(ref uint dTable, ReadOnlySpan<byte> source)
+        {
+            byte[] workspace = ArrayPool<byte>.Shared.Rent(HUF_DECOMPRESS_WORKSPACE_SIZE);
+            try
+            {
+                return ReadDTableX2Workspace(ref dTable, source, workspace);
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(workspace);
+            }
+        }
+
         public static int ReadDTableX2Workspace(ref uint dTable, ReadOnlySpan<byte> source, Span<byte> workspace)
         {
             DTableDesc dtd = Unsafe.As<uint, DTableDesc>(ref dTable);
@@ -202,7 +218,7 @@ namespace FiniteStateEntropy
                     for (int consumed = minBits; consumed < maxTableLog - minBits + 1; consumed++)
                     {
                         ref uint rankValRef = ref rankVal[consumed];
-                        for (int w = 0; w < maxW+1; w++)
+                        for (int w = 0; w < maxW + 1; w++)
                         {
                             Unsafe.Add(ref rankValRef, w) = Unsafe.Add(ref rankVal0, w) >> consumed;
                         }
